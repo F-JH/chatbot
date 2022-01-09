@@ -1,0 +1,2 @@
+
+dataPath = "data/subtitle"
