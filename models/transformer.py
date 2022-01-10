@@ -72,12 +72,12 @@ class EncoderLayer(nn.Module):
         super(EncoderLayer, self).__init__()
         self.enc_attention = mutliHeadAttention(d_model, dim_feedforward, n_head).to(device)
         self.enc_ffn = FeedForward(d_model).to(device)
-    def forward(self, enc_input):
+    def forward(self, enc_input, encMask):
         '''
         :param enc_input: [batch_size, m, d_model]
         :return: [batch_size, m, o_model]
         '''
-        output = self.enc_attention(enc_input, enc_input, enc_input)
+        output = self.enc_attention(enc_input, enc_input, enc_input, encMask)
         output = self.enc_ffn(output)
         return output
 
@@ -87,7 +87,7 @@ class Encoder(nn.Module):
         self.word2vec = word2vec
         self.posEmb = PostionalEncoding(d_model).to(device)
         self.layers = nn.ModuleList([deepcopy(EncodeLayer) for _ in range(n)])
-    def forward(self, inputX):
+    def forward(self, inputX, encMask):
         '''
         :param input: [batch_size, m]
         :return: [batch_size, m, o_model]
@@ -95,7 +95,7 @@ class Encoder(nn.Module):
         encOutput = self.word2vec(inputX)
         encOutput = self.posEmb(encOutput)
         for layer in self.layers:
-            encOutput = layer(encOutput)
+            encOutput = layer(encOutput, encMask)
         return encOutput
 
 class DecoderLayer(nn.Module):
@@ -118,7 +118,7 @@ class Decoder(nn.Module):
         self.posEmb = PostionalEncoding(d_model).to(device)
         self.layers = nn.ModuleList([deepcopy(decoderlayer) for _ in range(n)])
         self.device = device
-    def forward(self, inputY, encOutput):
+    def forward(self, inputY, encOutput, attnMask=None, encdecMask=None):
         '''
         :param inputY: [batch_size, m]
         :param encOutput: [batch_size, m, d_model]
@@ -127,13 +127,12 @@ class Decoder(nn.Module):
         batch_size, m = inputY.shape
         decInput = self.word2vec(inputY)
         decInput = self.posEmb(decInput)
-        attnMask = get_attn_mask(m, self.num_head, inputY)
+        # attnMask = get_attn_mask(m, self.num_head, inputY)
         selfMask = get_attn_subsequence_mask(batch_size, self.num_head, m, self.device)
         if attnMask is not None:
             selfMask = torch.gt((attnMask + selfMask), 0).to(self.device)
-        encAttnMask = None
         for layer in self.layers:
-            decInput = layer(encOutput, decInput, encAttnMask, selfMask.to(self.device))
+            decInput = layer(encOutput, decInput, encdecMask, selfMask.to(self.device))
         return decInput
 
 class Transformer(nn.Module):
@@ -145,14 +144,14 @@ class Transformer(nn.Module):
         self.encoder = Encoder(encodeLayer, num_of_layer, embedding, d_model, device)
         self.decoder = Decoder(decodeLayer, num_of_layer, embedding, d_model, device)
         self.generator = nn.Linear(d_model, vocab_size, bias=False).to(device)
-    def forward(self, inputX, inputY):
+    def forward(self, encInput, encMask, decInput, decMask, encdecMask):
         '''
         :param inputX: [batch_size, src_m, d_model]
         :param inputY: [batch_size, tar_m]
         :return:
         '''
-        encOutput = self.encoder(inputX)
-        output = self.decoder(inputY, encOutput)    # [batch_size, tar_m, d_model]
+        encOutput = self.encoder(encInput, encMask)
+        output = self.decoder(decInput, encOutput, decMask, encdecMask)    # [batch_size, tar_m, d_model]
         output = self.generator(output)    # [batch_size, tar_m, tar_vocab_num]
         return output.view(-1, output.size(-1)) # [batch_size*tar_m, tar_vocab_num]
 
@@ -171,6 +170,7 @@ def predict(model, enc_input, start_symbol, tar_vocab_num):
         dec_intput[0][i] = start_symbol
         dec_output = model.decoder(dec_intput, enc_input, enc_output)
         dec_output = model.generator(dec_output)    # [1, tar_vocab_num]？
+    return dec_output
 
 # e.g
 # device = "cuda" if torch.cuda.is_available() else "cpu"
