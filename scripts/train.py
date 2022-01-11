@@ -80,7 +80,7 @@ def train(model, epoch, bestLoss, trainData, validData, testData, optimizer, cri
             scheduler.step()
 
             # 等不了一个epoch了，太多了
-            if n % 4000 == 0:
+            if n % config["rest_batch"] == 0:
                 # print("start valid...")
                 totalLoss /= n
                 validLoss = valid(model, criterion, validData)

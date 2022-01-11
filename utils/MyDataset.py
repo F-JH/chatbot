@@ -61,14 +61,15 @@ class MyDataset(Dataset):
         else:
             return queToken, queMask, ansToken, label, ansMask, queansMask
 
-def getDataset(dataPath, tokenizer, n_head):
+def getDataset(dataPath, tokenizer, config):
+    n_head = config["transformerConfig"]["n_head"]
     queFile = open(join(dataPath, "que.txt"), "r", encoding="utf-8")
     ansFile = open(join(dataPath, "ans.txt"), "r", encoding="utf-8")
 
     with open(join(dataPath, "config.json"), "r") as c:
-        config = json.load(c)
-    queMax = config["queMax"]
-    ansMax = config["ansMax"]
+        configJson = json.load(c)
+    queMax = configJson["queMax"]
+    ansMax = configJson["ansMax"]
     queTrainSentence = []
     queValidSentence = []
     ansTrainSentence = []
@@ -83,10 +84,10 @@ def getDataset(dataPath, tokenizer, n_head):
             break
 
         # 切分train和valid
-        if num % 430 == 0:
+        if num % config["dataset"]["validSplit"] == 0:
             queValidSentence.append(que[:-1])
             ansValidSentence.append(ans[:-1])
-        elif num % 500 == 0:
+        elif num % config["dataset"]["testSplit"] == 0:
             queTestSentence.append(que[:-1])
             ansTestSentence.append(ans[:-1])
         else:
