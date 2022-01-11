@@ -1,4 +1,5 @@
 /chinese_chatbot_corpus/
 /models/bert_base_chinese/pytorch_model.bin
 /models/chat_DialoGPT_small_zh/pytorch_model.bin
+/checkpoint/checkpoint.pth
 /wandb/
