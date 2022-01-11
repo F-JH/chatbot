@@ -17,7 +17,7 @@ def main():
     model_name = "models/chat_DialoGPT_small_zh"
     tokenizer = getTokenizer(model_name)
 
-    trainDataset, validDataset, testDataset = MyDataset.getDataset(settings.dataPath, tokenizer, config.trainConfig["transformerConfig"]["n_head"])
+    trainDataset, validDataset, testDataset = MyDataset.getDataset(settings.dataPath, tokenizer, config.trainConfig)
     model = transformer.Transformer(len(tokenizer.get_vocab().keys()), **config.trainConfig["transformerConfig"])
     criterion = nn.CrossEntropyLoss(ignore_index=tokenizer.pad_token_id)
     optimizer = getattr(optim, config.trainConfig["optim"])(model.parameters(), lr=config.trainConfig["lr"], **config.trainConfig["params"])
