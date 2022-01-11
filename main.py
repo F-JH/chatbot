@@ -31,7 +31,7 @@ def main():
     scheduler = get_cosine_schedule_with_warmup(optimizer, warmup_steps, total_steps)
 
     model, optimizer, bestLoss, epoch = loadCheckpoint(model, optimizer, scheduler, config.trainConfig["savepoint"], "cuda")
-    train(model, 0, inf, trainDataLoader, validDataLoader, testDataset, optimizer, criterion, scheduler, tokenizer, config.trainConfig)
+    train(model, epoch, inf, trainDataLoader, validDataLoader, testDataset, optimizer, criterion, scheduler, tokenizer, config.trainConfig)
 
     # que, ans = predict(model, testDataset, tokenizer, 3)
     # print("test: [que]{} | [ans]{}".format("".join(que), "".join(ans)))
