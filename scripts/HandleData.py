@@ -16,7 +16,7 @@ def run(tokenizer):
         config = json.load(f)
     # writer = []
 
-    queTokens = np.zeros((config["len"], config["queMax"]+1), dtype=np.int64) + tokenizer.pad_token_id
+    queTokens = np.zeros((config["len"], config["queMax"]), dtype=np.int64) + tokenizer.pad_token_id
     ansTokens = np.zeros((config["len"], config["ansMax"]+1), dtype=np.int64) + tokenizer.pad_token_id
     labelTokens = np.zeros((config["len"], config["ansMax"]+1), dtype=np.int64) + tokenizer.pad_token_id
 
@@ -34,7 +34,7 @@ def run(tokenizer):
 
 
         queTokens[i, 0:queToken.shape[0]] = queToken
-        queTokens[i, queToken.shape[0]] = tokenizer.eos_token_id
+        # queTokens[i, queToken.shape[0]] = tokenizer.eos_token_id
         ansTokens[i, 0] = tokenizer.bos_token_id
         ansTokens[i, 1:ansToken.shape[0]+1] = ansToken
         labelTokens[i, 0:ansToken.shape[0]] = ansToken

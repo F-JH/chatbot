@@ -1,4 +1,7 @@
 from numpy import inf
+import torch
+import random
+import numpy as np
 from config import settings
 from utils import MyDataset
 from models import transformer, TransformerRuntimeMask
@@ -14,6 +17,17 @@ from scripts.TrainRuntimeMask import valid, predict, trainRuntimeMask
 
 from os.path import exists
 
+def same_seeds(seed):
+    torch.manual_seed(seed)
+    if torch.cuda.is_available():
+        torch.cuda.manual_seed(seed)
+        torch.cuda.manual_seed_all(seed)
+    np.random.seed(seed)
+    random.seed(seed)
+    torch.backends.cudnn.benchmark = False
+    torch.backends.cudnn.deterministic = True
+same_seeds(5211)
+
 def main():
     model_name = "models/chat_DialoGPT_small_zh"
     tokenizer = getTokenizer(model_name)
@@ -24,8 +38,8 @@ def main():
     criterion = nn.CrossEntropyLoss(ignore_index=tokenizer.pad_token_id)
     optimizer = getattr(optim, config.trainConfig["optim"])(model.parameters(), lr=config.trainConfig["lr"], **config.trainConfig["params"])
 
-    trainDataLoader = DataLoader(trainDataset, batch_size=config.trainConfig["batch_size"], shuffle=True, pin_memory=True, num_workers=8)
-    validDataLoader = DataLoader(validDataset, batch_size=config.trainConfig["batch_size"], shuffle=True, pin_memory=True, num_workers=8)
+    trainDataLoader = DataLoader(trainDataset, batch_size=config.trainConfig["batch_size"], shuffle=True, pin_memory=True, num_workers=config.trainConfig["dataset"]["num_workers"])
+    validDataLoader = DataLoader(validDataset, batch_size=config.trainConfig["batch_size"], shuffle=True, pin_memory=True, num_workers=config.trainConfig["dataset"]["num_workers"])
     print("size of valid:", len(validDataset))
 
     total_steps = int(-(len(trainDataset) // -config.trainConfig["batch_size"]) * config.trainConfig["n_epochs"])
@@ -43,4 +57,5 @@ def main():
     # print("test: [que]{} | [ans]{}".format("".join(que), "".join(ans)))
 
 if __name__ == '__main__':
+    same_seeds(5211)
     main()
