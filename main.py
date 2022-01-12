@@ -12,6 +12,8 @@ from utils.schedule import get_cosine_schedule_with_warmup
 # from scripts.train import valid, predict, train
 from scripts.TrainRuntimeMask import valid, predict, trainRuntimeMask
 
+from os.path import exists
+
 def main():
     model_name = "models/chat_DialoGPT_small_zh"
     tokenizer = getTokenizer(model_name)
@@ -30,9 +32,12 @@ def main():
     warmup_steps = total_steps // 100
     scheduler = get_cosine_schedule_with_warmup(optimizer, warmup_steps, total_steps)
 
-    model, optimizer, bestLoss, epoch = loadCheckpoint(model, optimizer, scheduler, config.trainConfig["savepoint"], "cuda")
+    epoch = 0
+    bestLoss = inf
+    if exists(config.trainConfig["savepoint"]):
+        model, optimizer, bestLoss, epoch = loadCheckpoint(model, optimizer, scheduler, config.trainConfig["savepoint"], "cuda")
     # train(model, epoch, inf, trainDataLoader, validDataLoader, testDataset, optimizer, criterion, scheduler, tokenizer, config.trainConfig)
-    trainRuntimeMask(model, epoch, inf, trainDataLoader, validDataLoader, testDataset, optimizer, criterion, scheduler, tokenizer, config.trainConfig)
+    trainRuntimeMask(model, epoch, bestLoss, trainDataLoader, validDataLoader, testDataset, optimizer, criterion, scheduler, tokenizer, config.trainConfig)
 
     # que, ans = predict(model, testDataset, tokenizer, 3)
     # print("test: [que]{} | [ans]{}".format("".join(que), "".join(ans)))
