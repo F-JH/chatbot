@@ -43,7 +43,7 @@ def predict(model, testData, tokenizer, n_head):
             next_symbol = decOutput[i, :].argmax()
             if next_symbol == tokenizer.eos_token_id:
                 break
-            if i != config["ansMax"] - 1:
+            if i != config["ansMax"]:
                 decInput[0, i+1] = next_symbol
     return tokenizer.decode(queToken.squeeze(0)), tokenizer.decode(decInput.squeeze(0))
 
