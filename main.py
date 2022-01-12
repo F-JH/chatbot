@@ -37,6 +37,5 @@ def main():
     # que, ans = predict(model, testDataset, tokenizer, 3)
     # print("test: [que]{} | [ans]{}".format("".join(que), "".join(ans)))
 
-print(__name__)
 if __name__ == '__main__':
     main()
