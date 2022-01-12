@@ -1,6 +1,6 @@
 trainConfig = {
     "n_epochs": 1,
-    "log": False,
+    "log": True,
     "lr": 5e-6,
     "batch_size": 64,
     "rest_batch": 1000,
