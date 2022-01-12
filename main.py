@@ -3,17 +3,16 @@ import torch
 import random
 import numpy as np
 from config import settings
-from utils import MyDataset
-from models import transformer, TransformerRuntimeMask
+from utils import MyDataset, TransformerRuntimeMask
 from torch.utils.data import DataLoader
 from config import config
 from torch import nn,optim
 from utils.getTokenizer import getTokenizer
-from scripts.SaveLoad import loadCheckpoint, saveCheckpoint
+from scripts.SaveLoad import loadCheckpoint
 from utils.schedule import get_cosine_schedule_with_warmup
 
 # from scripts.train import valid, predict, train
-from scripts.TrainRuntimeMask import valid, predict, trainRuntimeMask
+from scripts.TrainRuntimeMask import trainRuntimeMask
 
 from os.path import exists
 

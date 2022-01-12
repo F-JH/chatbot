@@ -23,7 +23,7 @@ class ScaledDotProductAttention(nn.Module):
         if scale is not None:
             attention = attention * scale
         if attn_mask is not None:
-            attention.masked_fill(attn_mask, -1e9)
+            attention = attention.masked_fill(attn_mask, -1e9)
         attention = torch.matmul(self.softmax(attention), V)    # [batch_size, n_head, m_q, d_head]
         attention = self.dropout(attention)
         return attention

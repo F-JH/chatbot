@@ -1,13 +1,9 @@
-import torch
 from copy import deepcopy
-import numpy as np
-from torch import nn
-import matplotlib.pyplot as plt
-from models.attention import *
+from utils.attention import *
 
-def get_attn_mask(len_q, n_head, seq_k, mask_token_id):
+def get_attn_mask(len_q, n_head, seq_k):
     batch_size, len_k = seq_k.shape
-    padMask = seq_k.data.eq(mask_token_id).unsqueeze(1)   # [batch_size, 1, len_k]
+    padMask = seq_k.data.eq(2).unsqueeze(1)   # [batch_size, 1, len_k]
     padMask = padMask.expand(batch_size, len_q, len_k)
     padMask = padMask.unsqueeze(1)
     return padMask.expand(batch_size, n_head, len_q, len_k)
@@ -82,22 +78,18 @@ class EncoderLayer(nn.Module):
         return output
 
 class Encoder(nn.Module):
-    def __init__(self, EncodeLayer, n, word2vec, d_model, mask_token_id, device="cuda"):
+    def __init__(self, EncodeLayer, n, word2vec, d_model, device="cuda"):
         super(Encoder, self).__init__()
         self.word2vec = word2vec
-        self.num_head = EncodeLayer.enc_attention.num_head
-        self.mask_token_id = mask_token_id
         self.posEmb = PostionalEncoding(d_model).to(device)
         self.layers = nn.ModuleList([deepcopy(EncodeLayer) for _ in range(n)])
-    def forward(self, encInput):
+    def forward(self, inputX, encMask):
         '''
-        :param encInput: [batch_size, m]
+        :param input: [batch_size, m]
         :return: [batch_size, m, o_model]
         '''
-        _, m = encInput.shape
-        encOutput = self.word2vec(encInput)
+        encOutput = self.word2vec(inputX)
         encOutput = self.posEmb(encOutput)
-        encMask = get_attn_mask(m, self.num_head, encInput, self.mask_token_id)
         for layer in self.layers:
             encOutput = layer(encOutput, encMask)
         return encOutput
@@ -115,52 +107,66 @@ class DecoderLayer(nn.Module):
         return output
 
 class Decoder(nn.Module):
-    def __init__(self, decoderlayer, n, word2vec, d_model, mask_token_id, device="cuda"):
+    def __init__(self, decoderlayer, n, word2vec, d_model, device="cuda"):
         super(Decoder, self).__init__()
         self.num_head = decoderlayer.dec_attn.num_head
         self.word2vec = word2vec
         self.posEmb = PostionalEncoding(d_model).to(device)
         self.layers = nn.ModuleList([deepcopy(decoderlayer) for _ in range(n)])
-        self.mask_token_id = mask_token_id
         self.device = device
-    def forward(self, encInput, decInput, encOutput, attnMask=None, encdecMask=None):
+    def forward(self, inputY, encOutput, attnMask=None, encdecMask=None):
         '''
-        :param encInput: [batch_size, src_m]
-        :param decInput: [batch_size, tar_m]
+        :param inputY: [batch_size, m]
         :param encOutput: [batch_size, m, d_model]
         :return:
         '''
-        batch_size, m = decInput.shape
-        attnMask = get_attn_mask(m, self.num_head, decInput, self.mask_token_id)
-        decInput = self.word2vec(decInput)
+        batch_size, m = inputY.shape
+        decInput = self.word2vec(inputY)
         decInput = self.posEmb(decInput)
+        # attnMask = get_attn_mask(m, self.num_head, inputY)
         selfMask = get_attn_subsequence_mask(batch_size, self.num_head, m, self.device)
         if attnMask is not None:
             selfMask = torch.gt((attnMask + selfMask), 0).to(self.device)
-        encdecMask = get_attn_mask(m, self.num_head, encInput, self.mask_token_id)
         for layer in self.layers:
             decInput = layer(encOutput, decInput, encdecMask, selfMask.to(self.device))
         return decInput
 
 class Transformer(nn.Module):
-    def __init__(self, vocab_size, mask_token_id, d_model, n_head, num_of_layer, device="cuda"):
+    def __init__(self, vocab_size, d_model, n_head, num_of_layer, device="cuda"):
         super(Transformer, self).__init__()
         encodeLayer = EncoderLayer(d_model, d_model, n_head, device)
         decodeLayer = DecoderLayer(d_model, n_head, device)
         embedding = nn.Embedding(vocab_size, d_model).to(device)
-        self.encoder = Encoder(encodeLayer, num_of_layer, embedding, d_model, mask_token_id, device)
-        self.decoder = Decoder(decodeLayer, num_of_layer, embedding, d_model, mask_token_id, device)
+        self.encoder = Encoder(encodeLayer, num_of_layer, embedding, d_model, device)
+        self.decoder = Decoder(decodeLayer, num_of_layer, embedding, d_model, device)
         self.generator = nn.Linear(d_model, vocab_size, bias=False).to(device)
-    def forward(self, encInput, decInput):
+    def forward(self, encInput, encMask, decInput, decMask, encdecMask):
         '''
-        :param encInput: [batch_size, src_m]
-        :param decInput: [batch_size, tar_m]
+        :param inputX: [batch_size, src_m, d_model]
+        :param inputY: [batch_size, tar_m]
         :return:
         '''
-        encOutput = self.encoder(encInput)
-        output = self.decoder(encInput, decInput, encOutput)    # [batch_size, tar_m, d_model]
+        encOutput = self.encoder(encInput, encMask)
+        output = self.decoder(decInput, encOutput, decMask, encdecMask)    # [batch_size, tar_m, d_model]
         output = self.generator(output)    # [batch_size, tar_m, tar_vocab_num]
         return output.view(-1, output.size(-1)) # [batch_size*tar_m, tar_vocab_num]
+
+def predict(model, enc_input, start_symbol, tar_vocab_num):
+    '''
+    :param model:
+    :param enc_input: [1, m] 一句话
+    :param start_symbol: start_symbol,比如 0, 1, 2, 3 代表 <Bos>,但如果mask是mask掉0的项（或其他值），则start_symbol不能是那个值
+                        即设 P是mask值，S是start_symbol值，则 P != Start_symbol
+    :return:
+    '''
+    model.eval()
+    enc_output = model.encoder(enc_input)
+    dec_intput = torch.zeros(1, tar_vocab_num).type_as(enc_input.data)
+    for i in range(tar_vocab_num):
+        dec_intput[0][i] = start_symbol
+        dec_output = model.decoder(dec_intput, enc_input, enc_output)
+        dec_output = model.generator(dec_output)    # [1, tar_vocab_num]？
+    return dec_output
 
 # e.g
 # device = "cuda" if torch.cuda.is_available() else "cpu"

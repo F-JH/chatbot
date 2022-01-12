@@ -30,12 +30,14 @@ def predict(model, testData, tokenizer, n_head):
     queToken, ansToken, labelToken = data
     queToken = queToken.unsqueeze(0)
     queToken = queToken.to("cuda")
+    n = 0
     with torch.no_grad():
         encOutput = model.encoder(queToken)
         decInput = torch.zeros(1, ansToken.shape[0], dtype=torch.long) + tokenizer.pad_token_id
         decInput = decInput.to("cuda")
         decInput[0, 0] = next_symbol
         for i in range(ansToken.shape[0]):
+            n += 1
             # 开始解码
             decOutput = model.decoder(queToken, decInput, encOutput)
             decOutput = model.generator(decOutput)  # [1, ansMax, vocab_size]
@@ -45,7 +47,7 @@ def predict(model, testData, tokenizer, n_head):
                 break
             if i != config["ansMax"]:
                 decInput[0, i+1] = next_symbol
-    return tokenizer.decode(queToken.squeeze(0)), tokenizer.decode(decInput.squeeze(0))
+    return tokenizer.decode(queToken.squeeze(0)), tokenizer.decode(decInput.squeeze(0)), n
 
 def trainRuntimeMask(model, epoch, bestLoss, trainData, validData, testData, optimizer, criterion, scheduler, tokenizer, config):
     if config["log"]:
@@ -78,8 +80,8 @@ def trainRuntimeMask(model, epoch, bestLoss, trainData, validData, testData, opt
                     wandb.log(log)
                 msg = "epoch : {}| Train Loss: {}| Valid Loss: {}".format(epoch, totalLoss, validLoss)
                 print(msg)
-                que, ans = predict(model, testData, tokenizer, config["transformerConfig"]["n_head"])
-                print("test:\n[que]{}\n[ans]{}".format("".join(que), "".join(ans)))
+                que, ans, n = predict(model, testData, tokenizer, config["transformerConfig"]["n_head"])
+                print("test:{}\n[que]{}\n[ans]{}".format(n, "".join(que), "".join(ans)))
                 if validLoss < bestLoss:
                     bestLoss = validLoss
                     print("save model................................................")
