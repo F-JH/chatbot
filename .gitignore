@@ -3,3 +3,6 @@
 /models/chat_DialoGPT_small_zh/pytorch_model.bin
 /checkpoint/checkpoint.pth
 /wandb/
+/data/subtitle/ans.npy
+/data/subtitle/label.npy
+/data/subtitle/que.npy
