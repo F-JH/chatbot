@@ -79,7 +79,7 @@ def trainRuntimeMask(model, epoch, bestLoss, trainData, validData, testData, opt
                 msg = "epoch : {}| Train Loss: {}| Valid Loss: {}".format(epoch, totalLoss, validLoss)
                 print(msg)
                 que, ans = predict(model, testData, tokenizer, config["transformerConfig"]["n_head"])
-                print("test: [que]{}\n[ans]{}".format("".join(que), "".join(ans)))
+                print("test:\n[que]{}\n[ans]{}".format("".join(que), "".join(ans)))
                 if validLoss < bestLoss:
                     bestLoss = validLoss
                     print("save model................................................")
