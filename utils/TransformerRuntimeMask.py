@@ -144,9 +144,11 @@ class Transformer(nn.Module):
         encodeLayer = EncoderLayer(d_model, d_model, n_head, device)
         decodeLayer = DecoderLayer(d_model, n_head, device)
         embedding = nn.Embedding(vocab_size, d_model).to(device)
+        share_weight = embedding.weight
         self.encoder = Encoder(encodeLayer, num_of_layer, embedding, d_model, mask_token_id, device)
         self.decoder = Decoder(decodeLayer, num_of_layer, embedding, d_model, mask_token_id, device)
         self.generator = nn.Linear(d_model, vocab_size, bias=False).to(device)
+        self.generator.weight = share_weight
     def forward(self, encInput, decInput):
         '''
         :param encInput: [batch_size, src_m]
