@@ -47,7 +47,7 @@ def predict(model, testData, tokenizer, n_head):
                 break
             if i != config["ansMax"]:
                 decInput[0, i+1] = next_symbol
-    return tokenizer.decode(queToken.squeeze(0)), tokenizer.decode(decInput.squeeze(0)), n
+    return tokenizer.decode(queToken.squeeze(0)), tokenizer.decode(decInput.squeeze(0)), tokenizer.decode(labelToken), n
 
 def trainRuntimeMask(model, epoch, bestLoss, trainData, validData, testData, optimizer, criterion, scheduler, tokenizer, config):
     if config["log"]:
@@ -80,8 +80,11 @@ def trainRuntimeMask(model, epoch, bestLoss, trainData, validData, testData, opt
                     wandb.log(log)
                 msg = "epoch : {}| Train Loss: {}| Valid Loss: {}".format(epoch, totalLoss, validLoss)
                 print(msg)
-                que, ans, n = predict(model, testData, tokenizer, config["transformerConfig"]["n_head"])
-                print("test:{}\n[que]{}\n[ans]{}".format(n, "".join(que), "".join(ans)))
+                que, ans, label, n = predict(model, testData, tokenizer, config["transformerConfig"]["n_head"])
+                que = "".join(que).replace(tokenizer.pad_token, "")
+                ans = "".join(ans).replace(tokenizer.pad_token, "")
+                label = "".join(label).replace(tokenizer.pad_token, "")
+                print("test:{}\n[que]{}\n[ans]{}\n[label]{}".format(n, que, ans, label))
                 if validLoss < bestLoss:
                     bestLoss = validLoss
                     print("save model................................................")
