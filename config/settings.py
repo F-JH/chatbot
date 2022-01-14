@@ -1,2 +1,0 @@
-
-dataPath = "data/subtitle"

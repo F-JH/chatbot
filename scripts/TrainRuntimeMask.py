@@ -3,8 +3,9 @@ import numpy as np
 from tqdm.auto import tqdm
 from os.path import join
 import json, wandb
-from config.settings import dataPath
+from config.config import dataPath
 from scripts.SaveLoad import saveCheckpoint
+import torch.nn.functional as F
 
 def valid(model, criterion, validData):
     model.eval()
@@ -21,8 +22,8 @@ def valid(model, criterion, validData):
     return validLoss
 
 def predict(model, testData, tokenizer, n_head):
-    with open(join(dataPath, "config.json"), "r") as c:
-        config = json.load(c)
+    # with open(join(dataPath, "config.json"), "r") as c:
+    #     config = json.load(c)
     model.eval()
     next_symbol = tokenizer.bos_token_id
     data = testData[int(np.random.rand() * len(testData))]
@@ -45,19 +46,54 @@ def predict(model, testData, tokenizer, n_head):
             next_symbol = decOutput[i, :].argmax()
             if next_symbol == tokenizer.eos_token_id:
                 break
+            if i != ansToken.shape[0] - 1:
+                decInput[0, i+1] = next_symbol
+    return tokenizer.decode(queToken.squeeze(0)), tokenizer.decode(decInput.squeeze(0)[0:n-1]), tokenizer.decode(labelToken), n
+
+def predict_input(model, msg, tokenizer):
+    with open(join(dataPath, "config.json"), "r") as c:
+        config = json.load(c)
+    model.eval()
+    next_symbol = tokenizer.bos_token_id
+    # data = [i.to("cuda") for i in data]
+    queToken = torch.LongTensor(tokenizer.encode(msg))
+    queToken = F.pad(queToken, [0, config["queMax"] - queToken.shape[0]], mode="constant", value=tokenizer.pad_token_id)
+    queToken = queToken.unsqueeze(0)
+    queToken = queToken.to("cuda")
+    n = 0
+    with torch.no_grad():
+        encOutput = model.encoder(queToken)
+        decInput = torch.zeros(1, config["ansMax"]+1, dtype=torch.long) + tokenizer.pad_token_id
+        decInput = decInput.to("cuda")
+        decInput[0, 0] = next_symbol
+        for i in range(config["ansMax"]+1):
+            n += 1
+            # 开始解码
+            decOutput = model.decoder(queToken, decInput, encOutput)
+            decOutput = model.generator(decOutput)  # [1, ansMax, vocab_size]
+            decOutput = decOutput.squeeze(0)
+            next_symbol = decOutput[i, :].argmax()
+            if next_symbol == tokenizer.eos_token_id:
+                break
             if i != config["ansMax"]:
                 decInput[0, i+1] = next_symbol
-    return tokenizer.decode(queToken.squeeze(0)), tokenizer.decode(decInput.squeeze(0)), tokenizer.decode(labelToken), n
+    return tokenizer.decode(decInput.squeeze(0))
 
-def trainRuntimeMask(model, epoch, bestLoss, trainData, validData, testData, optimizer, criterion, scheduler, tokenizer, config):
+def trainRuntimeMask(model, epoch, batch_n, bestLoss, trainData, validData, testData, optimizer, criterion, scheduler, tokenizer, config):
+    use_load_batch_n = True
     if config["log"]:
         wandb.init()
+    count = 0
     while epoch < config["n_epochs"]:
         model.train()
         totalLoss = 0
-        n = 0
         for data in tqdm(trainData):
-            n += 1
+            if use_load_batch_n and count < batch_n:
+                count += 1
+                continue
+            else:
+                use_load_batch_n = False
+            batch_n += 1
             optimizer.zero_grad()
             data = [i.to("cuda") for i in data]
             output = model(data[0], data[1])
@@ -68,9 +104,9 @@ def trainRuntimeMask(model, epoch, bestLoss, trainData, validData, testData, opt
             scheduler.step()
 
             # 等不了一个epoch了，太多了
-            if n % config["rest_batch"] == 0:
+            if batch_n % config["rest_batch"] == 0:
                 # print("start valid...")
-                totalLoss /= n
+                totalLoss /= config["rest_batch"]
                 validLoss = valid(model, criterion, validData)
                 if config["log"]:
                     log = {
@@ -88,6 +124,6 @@ def trainRuntimeMask(model, epoch, bestLoss, trainData, validData, testData, opt
                 if validLoss < bestLoss:
                     bestLoss = validLoss
                     print("save model................................................")
-                    saveCheckpoint(model, optimizer,scheduler, bestLoss, epoch, config["savepoint"])
+                    saveCheckpoint(model, optimizer,scheduler, bestLoss, epoch, batch_n, config["savepoint"])
                 totalLoss = 0
-                n = 0
+        batch_n = 0

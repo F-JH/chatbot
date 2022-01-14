@@ -47,13 +47,15 @@ class FeedForward(nn.Module):
             nn.ReLU(),
             nn.Linear(d_model, d_model)
         )
+        self.ln = nn.LayerNorm(d_model)
     def forward(self, input):
         '''
         :param input: [batch_size, m, d_model]
         :return: Add & Layer Norm [batch_size, m, d_model]
         '''
         output = self.fc(input)
-        output = nn.LayerNorm(self.d_model).cuda()(output + input)
+        # output = nn.LayerNorm(self.d_model).cuda()(output + input)
+        output = self.ln(output + input)
         return output
 
 class EncoderLayer(nn.Module):
