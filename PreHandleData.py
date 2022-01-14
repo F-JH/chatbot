@@ -1,3 +1,4 @@
+import os
 from scripts import HandleData
 from config import config
 from utils.getTokenizer import getTokenizer
@@ -8,4 +9,6 @@ if __name__ == '__main__':
     dataFile = config.preDataFile
     savePath = config.dataPath
 
+    if not os.path.exists(savePath):
+        os.mkdir(savePath)
     HandleData.run(tokenizer, dataFile, savePath)
