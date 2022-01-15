@@ -8,10 +8,6 @@ from torch.utils.data import Dataset
 
 class ChatbotDataset(Dataset):
     def __init__(self, queTokens, ansTokens, labelTokens, n_head, mode="train"):
-        # self.queTokens = torch.from_numpy(np.load(quePath))
-        # self.ansTokens = torch.from_numpy(np.load(ansPath))
-        # self.labelTokens = torch.from_numpy(np.load(labelPath))
-
         self.queTokens = queTokens
         self.ansTokens = ansTokens
         self.labelTokens = labelTokens
