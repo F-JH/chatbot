@@ -30,7 +30,7 @@ def main():
     model_name = "models/chat_DialoGPT_small_zh"
     tokenizer = getTokenizer(model_name)
 
-    trainDataset, validDataset, testDataset = MyDataset.getDataset(config.dataPath, tokenizer, config.trainConfig, mode="Handle")
+    trainDataset, validDataset, testDataset = MyDataset.getDataset(config.dataPath, config.trainConfig)
     # model = transformer.Transformer(len(tokenizer.get_vocab().keys()), **config.trainConfig["transformerConfig"])
     model = TransformerRuntimeMask.Transformer(len(tokenizer.get_vocab().keys()), tokenizer.pad_token_id, **config.trainConfig["transformerConfig"])
     if config.trainConfig["ignore_pad_loss"]:
