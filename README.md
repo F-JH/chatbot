@@ -21,7 +21,7 @@
 所有配置都在config/config.py下
 trainConfig = {
     "n_epochs": 10,
-    "log": True,
+    "log": True,         # 是否连到wandb记录训练过程，需要翻墙，各位翻不了的就设为Flase吧
     "lr": 3e-4,
     "batch_size": 32,
     "rest_batch": 2000,
