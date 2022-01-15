@@ -3,6 +3,10 @@
 用Transformer训练的一个chatbot，业余玩家，随便玩玩
 数据集：[chinese_chatbot_corpus](https://github.com/codemayq/chinese_chatbot_corpus)
 
+#### 下载数据集到项目中
+
+* git clone 上面那个项目到根目录，然后按照他的文档下载相应的数据集，然后会生成目录 chinese_chatbot_corpus/clean_chat_corpus，处理过的语料都在这里面，到config/config.py设置好preDataFile，指定自己要的语料（感觉小黄鸡的效果不错，可能以后会自己收集一些语料，但不会放出来）
+
 #### 快速开始训练
 
 ```
