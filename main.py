@@ -79,5 +79,5 @@ def test():
 
 if __name__ == '__main__':
     same_seeds(5211)
-    # main()
-    test()
+    main()
+    # test()

@@ -26,7 +26,8 @@ trainConfig = {
         # d_model 必须能被 n_head 整除，且为符合positionEmbedding，d_model要是偶数
         "d_model": 80,
         "n_head": 5,
-        "num_of_layer": 6
+        "num_of_layer": 6,
+        "device": "cuda"
     },
     "savepoint": "checkpoint/checkpoint.pth"
 }
