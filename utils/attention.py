@@ -40,6 +40,7 @@ class mutliHeadAttention(nn.Module):
         self.num_head = n_head
         self.dropout = nn.Dropout(dropout)
         self.d_head = dim_feedforward // n_head
+        self.device = device
 
         self.w_q = nn.Linear(d_model, dim_feedforward, bias=False).to(device)
         self.w_k = nn.Linear(d_model, dim_feedforward, bias=False).to(device)
@@ -66,5 +67,5 @@ class mutliHeadAttention(nn.Module):
         attention = ScaledDotProductAttention()(Q, K, V, attn_mask, np.sqrt(1.0/self.d_head))
         output = attention.transpose(1, 2).reshape(batch_size, -1, self.dim_feedforward)
         output = self.w_o(output)
-        output = nn.LayerNorm(self.d_model).cuda()(output + input_Q)   # [batch_size, m_q, d_model]
+        output = nn.LayerNorm(self.d_model).to(self.device)(output + input_Q)   # [batch_size, m_q, d_model]
         return output

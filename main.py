@@ -14,6 +14,8 @@ from utils.schedule import get_cosine_schedule_with_warmup
 from scripts.TrainRuntimeMask import trainRuntimeMask, predict, predict_input
 
 from os.path import exists
+from os import environ
+environ["KMP_DUPLICATE_LIB_OK"]="TRUE"
 
 def same_seeds(seed):
     torch.manual_seed(seed)
@@ -65,15 +67,13 @@ def test():
     tokenizer = getTokenizer(model_name)
     model = TransformerRuntimeMask.Transformer(len(tokenizer.get_vocab().keys()), tokenizer.pad_token_id, **config.trainConfig["transformerConfig"])
     if exists(config.trainConfig["savepoint"]):
-        # optimizer = getattr(optim, config.trainConfig["optim"])(model.parameters(), lr=config.trainConfig["lr"], **config.trainConfig["params"])
-        # scheduler = get_cosine_schedule_with_warmup(optimizer, 10, 1000)
-        # model, optimizer, bestLoss, epoch, batch_n, scheduler = loadCheckpoint(model, optimizer, scheduler, config.trainConfig["savepoint"], "cpu")
-        model = loadWeight(model, config.trainConfig["savepoint"], "cpu")
+        # model = loadWeight(model, config.trainConfig["savepoint"], "cpu")
+        model = torch.load("checkpoint/model.pt")
     while True:
         msg = input(">>>")
         if(msg == "exit"):
             break
-        result = predict_input(model, msg, tokenizer)
+        result = predict_input(model, msg, tokenizer, "cpu")
         result = result.replace(tokenizer.pad_token, "")
         result = result.replace(tokenizer.bos_token, "")
         print(result)

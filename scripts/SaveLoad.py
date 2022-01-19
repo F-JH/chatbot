@@ -32,4 +32,4 @@ def loadWeight(model, path, device):
 
 def saveModule(model):
     model.eval()
-    torch.save(model, "model.pt")
+    torch.save(model, "checkpoint/model.pt")
