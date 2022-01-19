@@ -23,3 +23,13 @@ def loadCheckpoint(model, optimizer, scheduler, path, device):
     # scheduler.load_state_dict(modelCKPT["scheduler"])
     model.eval()
     return model, optimizer, bestLoss, epoch, batch_n, scheduler
+
+def loadWeight(model, path, device):
+    print("load {}".format(path))
+    modelCKPT = torch.load(path, device)
+    model.load_state_dict(modelCKPT["state_dict"])
+    return model
+
+def saveModule(model):
+    model.eval()
+    torch.save(model, "model.pt")

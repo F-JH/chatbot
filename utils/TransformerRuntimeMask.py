@@ -68,7 +68,7 @@ class EncoderLayer(nn.Module):
         :param device: cuda
         '''
         super(EncoderLayer, self).__init__()
-        self.enc_attention = mutliHeadAttention(d_model, dim_feedforward, n_head).to(device)
+        self.enc_attention = mutliHeadAttention(d_model, dim_feedforward, n_head, device=device)
         self.enc_ffn = FeedForward(d_model).to(device)
     def forward(self, enc_input, encMask):
         '''
@@ -85,7 +85,7 @@ class Encoder(nn.Module):
         self.word2vec = word2vec
         self.num_head = EncodeLayer.enc_attention.num_head
         self.mask_token_id = mask_token_id
-        self.posEmb = PostionalEncoding(d_model).to(device)
+        self.posEmb = PostionalEncoding(d_model, device=device)
         self.layers = nn.ModuleList([deepcopy(EncodeLayer) for _ in range(n)])
     def forward(self, encInput):
         '''
@@ -103,8 +103,8 @@ class Encoder(nn.Module):
 class DecoderLayer(nn.Module):
     def __init__(self, d_model, n_head, device="cuda"):
         super(DecoderLayer, self).__init__()
-        self.dec_mask_attn = mutliHeadAttention(d_model, d_model, n_head).to(device)
-        self.dec_attn = mutliHeadAttention(d_model, d_model, n_head).to(device)
+        self.dec_mask_attn = mutliHeadAttention(d_model, d_model, n_head, device=device)
+        self.dec_attn = mutliHeadAttention(d_model, d_model, n_head, device=device)
         self.ffn = FeedForward(d_model).to(device)
     def forward(self, encInput, decInput, attnMask, selfMask):
         output = self.dec_mask_attn(decInput, decInput, decInput, selfMask)
@@ -117,7 +117,7 @@ class Decoder(nn.Module):
         super(Decoder, self).__init__()
         self.num_head = decoderlayer.dec_attn.num_head
         self.word2vec = word2vec
-        self.posEmb = PostionalEncoding(d_model).to(device)
+        self.posEmb = PostionalEncoding(d_model, device=device)
         self.layers = nn.ModuleList([deepcopy(decoderlayer) for _ in range(n)])
         self.mask_token_id = mask_token_id
         self.device = device

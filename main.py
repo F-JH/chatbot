@@ -7,7 +7,7 @@ from torch.utils.data import DataLoader
 from config import config
 from torch import nn,optim
 from utils.getTokenizer import getTokenizer
-from scripts.SaveLoad import loadCheckpoint
+from scripts.SaveLoad import loadCheckpoint, loadWeight
 from utils.schedule import get_cosine_schedule_with_warmup
 
 # from scripts.train import valid, predict, train
@@ -65,9 +65,10 @@ def test():
     tokenizer = getTokenizer(model_name)
     model = TransformerRuntimeMask.Transformer(len(tokenizer.get_vocab().keys()), tokenizer.pad_token_id, **config.trainConfig["transformerConfig"])
     if exists(config.trainConfig["savepoint"]):
-        optimizer = getattr(optim, config.trainConfig["optim"])(model.parameters(), lr=config.trainConfig["lr"], **config.trainConfig["params"])
-        scheduler = get_cosine_schedule_with_warmup(optimizer, 10, 1000)
-        model, optimizer, bestLoss, epoch, batch_n, scheduler = loadCheckpoint(model, optimizer, scheduler, config.trainConfig["savepoint"], "cuda")
+        # optimizer = getattr(optim, config.trainConfig["optim"])(model.parameters(), lr=config.trainConfig["lr"], **config.trainConfig["params"])
+        # scheduler = get_cosine_schedule_with_warmup(optimizer, 10, 1000)
+        # model, optimizer, bestLoss, epoch, batch_n, scheduler = loadCheckpoint(model, optimizer, scheduler, config.trainConfig["savepoint"], "cpu")
+        model = loadWeight(model, config.trainConfig["savepoint"], "cpu")
     while True:
         msg = input(">>>")
         if(msg == "exit"):
