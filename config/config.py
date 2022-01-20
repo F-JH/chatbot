@@ -27,7 +27,7 @@ trainConfig = {
         "d_model": 80,
         "n_head": 5,
         "num_of_layer": 6,
-        "device": "cuda"
+        "device": "cpu"
     },
     "savepoint": "checkpoint/checkpoint.pth"
 }

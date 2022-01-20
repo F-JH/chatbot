@@ -11,7 +11,8 @@ from scripts.SaveLoad import loadCheckpoint, loadWeight
 from utils.schedule import get_cosine_schedule_with_warmup
 
 # from scripts.train import valid, predict, train
-from scripts.TrainRuntimeMask import trainRuntimeMask, predict, predict_input
+from scripts.predict import predict_input
+from scripts.TrainRuntimeMask import trainRuntimeMask
 
 from os.path import exists
 from os import environ
@@ -67,8 +68,8 @@ def test():
     tokenizer = getTokenizer(model_name)
     model = TransformerRuntimeMask.Transformer(len(tokenizer.get_vocab().keys()), tokenizer.pad_token_id, **config.trainConfig["transformerConfig"])
     if exists(config.trainConfig["savepoint"]):
-        # model = loadWeight(model, config.trainConfig["savepoint"], "cpu")
-        model = torch.load("checkpoint/model.pt")
+        model = loadWeight(model, config.trainConfig["savepoint"], "cpu")
+        # model = torch.load("checkpoint/model.pt")
     while True:
         msg = input(">>>")
         if(msg == "exit"):
@@ -80,5 +81,5 @@ def test():
 
 if __name__ == '__main__':
     same_seeds(5211)
-    main()
-    # test()
+    # main()
+    test()
