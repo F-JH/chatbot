@@ -1,7 +1,7 @@
-FROM continuumio/anaconda3
+FROM python
 USER root
 WORKDIR /app
 COPY ./* ./
-RUN conda install -y pytorch torchvision torchaudio -c pytorch \
-    && conda install -y transformers
+RUN pip3 install torch==1.10.1+cpu -f https://download.pytorch.org/whl/cpu/torch_stable.html \
+    && pip3 install transformers
 CMD ["python","bot.py"]
