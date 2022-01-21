@@ -4,4 +4,5 @@ WORKDIR /app
 COPY ./* ./
 RUN pip3 install torch==1.10.1+cpu -f https://download.pytorch.org/whl/cpu/torch_stable.html \
     && pip3 install transformers
+    && pip3 install flask numpy
 CMD ["python","bot.py"]
