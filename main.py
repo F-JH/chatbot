@@ -7,7 +7,7 @@ from torch.utils.data import DataLoader
 from config import config
 from torch import nn,optim
 from utils.getTokenizer import getTokenizer
-from scripts.SaveLoad import loadCheckpoint, loadWeight
+from scripts.SaveLoad import loadCheckpoint, loadWeight, saveModule
 from utils.schedule import get_cosine_schedule_with_warmup
 
 # from scripts.train import valid, predict, train
@@ -79,7 +79,16 @@ def test():
         result = result.replace(tokenizer.bos_token, "")
         print(result)
 
+def saveModel():
+    model_name = "models/chat_DialoGPT_small_zh"
+    tokenizer = getTokenizer(model_name)
+    config.trainConfig["transformerConfig"]["device"] = "cpu"
+    model = TransformerRuntimeMask.Transformer(len(tokenizer.get_vocab().keys()), tokenizer.pad_token_id, **config.trainConfig["transformerConfig"])
+    model = loadWeight(model, config.trainConfig["savepoint"], "cpu")
+    saveModule(model)
+
 if __name__ == '__main__':
     same_seeds(5211)
     main()
     # test()
+    # saveModel()
