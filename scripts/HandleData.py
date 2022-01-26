@@ -29,6 +29,8 @@ def run(tokenizer, dataFile, savePath):
             sentences = f.readline()
             if not sentences:
                 break
+            if config.is_replace_space:
+                sentences = sentences.replace(" ", "")
             sentences = sentences.replace("\n", "")
             sentences = sentences.split("\t")
             if symbols(sentences[0]) or symbols(sentences[1]):

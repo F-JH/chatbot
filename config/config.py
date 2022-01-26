@@ -1,5 +1,6 @@
 preDataFile = "chinese_chatbot_corpus/clean_chat_corpus/xiaohuangji.tsv"
 dataPath = "data/xiaohuangji"
+is_replace_space = True #预处理是否忽略空格（适用于已被分词的语料）
 sentenceMaxLen = 50     # 预处理中，每条对话每个sentence的最大词长度（长度是指被tokenizer encode过的token长度）
 trainConfig = {
     "n_epochs": 10,
