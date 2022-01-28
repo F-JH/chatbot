@@ -6,7 +6,7 @@ from utils.getTokenizer import getTokenizer
 
 app = Flask(__name__)
 tokenizer = getTokenizer("models/chat_DialoGPT_small_zh")
-model = torch.load("checkpoint/model.pt")
+model = torch.load("checkpoint/modelColab.pt")
 
 @app.route("/", methods=["POST"])
 def messageBuild():

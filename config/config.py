@@ -22,10 +22,21 @@ trainConfig = {
     },
     "transformerConfig":{
         # d_model 必须能被 n_head 整除，且为符合positionEmbedding，d_model要是偶数
-        "d_model": 80,
-        "n_head": 5,
+        "d_model": 200,
+        "n_head": 20,
         "num_of_layer": 6,
         "device": "cpu"
     },
-    "savepoint": "checkpoint/checkpoint.pth"
+    "savepoint": "checkpoint/checkpointKaggle.pth"
+}
+
+preReplace = {
+    "ans":{
+        "小通": "梨衣",
+        "我是鸡": "我是梨衣",
+        "小明": "兔子"
+    },
+    "que": {
+        "小明": "兔子"
+    }
 }
