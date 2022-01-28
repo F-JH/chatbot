@@ -25,7 +25,7 @@ trainConfig = {
         "d_model": 200,
         "n_head": 20,
         "num_of_layer": 6,
-        "device": "cpu"
+        "device": "cuda"
     },
     "savepoint": "checkpoint/checkpointKaggle.pth"
 }
@@ -34,9 +34,18 @@ preReplace = {
     "ans":{
         "小通": "梨衣",
         "我是鸡": "我是梨衣",
+        "黄鸡": "梨衣",
+        "黄色的鸡": "梨衣",
+        "鸡崽": "梨衣",
+        "鸡": "猫",
         "小明": "兔子"
     },
     "que": {
+        "黄鸡": "梨衣",
+        "黄色的鸡": "梨衣",
+        "鸡崽": "梨衣",
+        "鸡": "猫",
+        "小通": "梨衣",
         "小明": "兔子"
     }
 }

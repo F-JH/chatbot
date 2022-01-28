@@ -66,3 +66,4 @@ def trainRuntimeMask(model, epoch, batch_n, bestLoss, trainData, validData, test
                     saveCheckpoint(model, optimizer,scheduler, bestLoss, epoch, batch_n, config["savepoint"])
                 totalLoss = 0
         batch_n = 0
+        epoch += 1
