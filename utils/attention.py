@@ -10,7 +10,7 @@ class ScaledDotProductAttention(nn.Module):
         super(ScaledDotProductAttention, self).__init__()
         self.dropout = nn.Dropout(dropout)
         self.softmax = nn.Softmax(dim=-1)
-    def forward(self, Q, K, V, attn_mask, scale=None):
+    def forward(self, Q, K, V, attn_mask, scale):
         '''
         :param Q: [batch_size, n_head, m_q, d_head]
         :param K: [batch_size, n_head, m_k, d_head]
@@ -42,6 +42,8 @@ class mutliHeadAttention(nn.Module):
         self.d_head = dim_feedforward // n_head
         self.device = device
 
+        self.scaledDotProductAttention = ScaledDotProductAttention()
+
         self.w_q = nn.Linear(d_model, dim_feedforward, bias=False).to(device)
         self.w_k = nn.Linear(d_model, dim_feedforward, bias=False).to(device)
         self.w_v = nn.Linear(d_model, dim_feedforward, bias=False).to(device)
@@ -64,7 +66,7 @@ class mutliHeadAttention(nn.Module):
         K = K.view(batch_size, -1, self.num_head, self.d_head).transpose(1,2)
         V = V.view(batch_size, -1, self.num_head, self.d_head).transpose(1,2)
         # 计算ScaledDotProductAttention       [batch_size, n_head, m_q, d_head]
-        attention = ScaledDotProductAttention()(Q, K, V, attn_mask, np.sqrt(1.0/self.d_head))
+        attention = self.scaledDotProductAttention(Q, K, V, attn_mask, np.sqrt(1.0 / self.d_head))
         output = attention.transpose(1, 2).reshape(batch_size, -1, self.dim_feedforward)
         output = self.w_o(output)
         output = nn.LayerNorm(self.d_model).to(self.device)(output + input_Q)   # [batch_size, m_q, d_model]

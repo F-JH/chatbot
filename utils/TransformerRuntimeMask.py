@@ -1,6 +1,10 @@
 from copy import deepcopy
+
+import torch.jit
+
 from utils.attention import *
 
+@torch.jit.script
 def get_attn_mask(len_q, n_head, seq_k, mask_token_id):
     batch_size, len_k = seq_k.shape
     padMask = seq_k.data.eq(mask_token_id).unsqueeze(1)   # [batch_size, 1, len_k]

@@ -25,7 +25,7 @@ trainConfig = {
         "d_model": 200,
         "n_head": 20,
         "num_of_layer": 6,
-        "device": "cuda"
+        "device": "cpu"
     },
     "savepoint": "checkpoint/checkpointKaggle.pth"
 }
