@@ -20,10 +20,8 @@ class ScaledDotProductAttention(nn.Module):
         :return:
         '''
         attention = torch.matmul(Q, K.transpose(2, 3))  # [batch_size, n_head, m_q, m_k]
-        if scale is not None:
-            attention = attention * scale
-        if attn_mask is not None:
-            attention = attention.masked_fill(attn_mask, -1e9)
+        attention = attention * scale
+        attention = attention.masked_fill(attn_mask, -1e9)
         attention = torch.matmul(self.softmax(attention), V)    # [batch_size, n_head, m_q, d_head]
         attention = self.dropout(attention)
         return attention
@@ -32,7 +30,7 @@ class mutliHeadAttention(nn.Module):
     '''
         mutli head Attention
     '''
-    def __init__(self, d_model, dim_feedforward, n_head, dropout=0.3, device="cuda"):
+    def __init__(self, d_model, dim_feedforward, n_head, device, dropout=0.3):
         assert  dim_feedforward % n_head == 0
         super(mutliHeadAttention, self).__init__()
         self.d_model = d_model
@@ -40,15 +38,15 @@ class mutliHeadAttention(nn.Module):
         self.num_head = n_head
         self.dropout = nn.Dropout(dropout)
         self.d_head = dim_feedforward // n_head
-        self.device = device
 
         self.scaledDotProductAttention = ScaledDotProductAttention()
+        self.layerNorm = nn.LayerNorm(d_model, device=device)
 
-        self.w_q = nn.Linear(d_model, dim_feedforward, bias=False).to(device)
-        self.w_k = nn.Linear(d_model, dim_feedforward, bias=False).to(device)
-        self.w_v = nn.Linear(d_model, dim_feedforward, bias=False).to(device)
-        self.w_o = nn.Linear(dim_feedforward, d_model, bias=False).to(device)
-    def forward(self, input_Q, input_K, input_V, attn_mask=None):
+        self.w_q = nn.Linear(d_model, dim_feedforward, bias=False, device=device)
+        self.w_k = nn.Linear(d_model, dim_feedforward, bias=False, device=device)
+        self.w_v = nn.Linear(d_model, dim_feedforward, bias=False, device=device)
+        self.w_o = nn.Linear(dim_feedforward, d_model, bias=False, device=device)
+    def forward(self, input_Q, input_K, input_V, attn_mask):
         '''
         :param input_Q: [batch_size, m, d_model]
         :param input_K: [batch_size, m, d_model]
@@ -66,8 +64,8 @@ class mutliHeadAttention(nn.Module):
         K = K.view(batch_size, -1, self.num_head, self.d_head).transpose(1,2)
         V = V.view(batch_size, -1, self.num_head, self.d_head).transpose(1,2)
         # 计算ScaledDotProductAttention       [batch_size, n_head, m_q, d_head]
-        attention = self.scaledDotProductAttention(Q, K, V, attn_mask, np.sqrt(1.0 / self.d_head))
+        attention = self.scaledDotProductAttention(Q, K, V, attn_mask, torch.sqrt(torch.tensor(1.0 / self.d_head)))
         output = attention.transpose(1, 2).reshape(batch_size, -1, self.dim_feedforward)
         output = self.w_o(output)
-        output = nn.LayerNorm(self.d_model).to(self.device)(output + input_Q)   # [batch_size, m_q, d_model]
+        output = self.layerNorm(output + input_Q)   # [batch_size, m_q, d_model]
         return output
