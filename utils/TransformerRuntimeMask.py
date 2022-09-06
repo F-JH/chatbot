@@ -135,6 +135,9 @@ class Decoder(nn.Module):
         decInput = self.word2vec(decInput)
         decInput = self.posEmb(decInput)
         selfMask = get_attn_subsequence_mask(batch_size, self.num_head, m)
+        if self.device[:4] == 'cuda':
+            attnMask = attnMask.cuda()
+            selfMask = selfMask.cuda()
         selfMask = torch.gt((attnMask + selfMask), 0)
         encdecMask = get_attn_mask(m, self.num_head, encInput, self.mask_token_id)
         if self.device[:4] == 'cuda':

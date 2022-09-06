@@ -25,9 +25,9 @@ trainConfig = {
         "d_model": 200,
         "n_head": 20,
         "num_of_layer": 6,
-        "device": "cpu"
+        "device": "cuda"
     },
-    "savepoint": "checkpoint/checkpointKaggle.pth"
+    "savepoint": "checkpoint/checkpointColab.pth"
 }
 
 preReplace = {
